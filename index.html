@@ -38,13 +38,16 @@
             <button onclick="setFilter('전체')" class="category-tab active px-4 py-2 rounded-full bg-white shadow-sm text-sm font-semibold transition-all">전체</button>
             <button onclick="setFilter('개인')" class="category-tab px-4 py-2 rounded-full bg-white shadow-sm text-sm font-semibold transition-all">개인</button>
             <button onclick="setFilter('업무')" class="category-tab px-4 py-2 rounded-full bg-white shadow-sm text-sm font-semibold transition-all">업무</button>
+            <button onclick="setFilter('육아')" class="category-tab px-4 py-2 rounded-full bg-white shadow-sm text-sm font-semibold transition-all text-nowrap">육아</button>
             <button onclick="setFilter('쇼핑')" class="category-tab px-4 py-2 rounded-full bg-white shadow-sm text-sm font-semibold transition-all">쇼핑</button>
+            
         </div>
 
         <div class="mb-6 flex bg-white rounded-2xl shadow-sm overflow-hidden border border-transparent focus-within:border-blue-500 transition-all">
             <select id="categorySelect" class="bg-gray-50 px-3 text-sm border-r outline-none appearance-none text-gray-600">
                 <option value="개인">개인</option>
                 <option value="업무">업무</option>
+                <option value="육아">육아</option>
                 <option value="쇼핑">쇼핑</option>
             </select>
             <input type="text" id="todoInput" placeholder="새로운 할 일..." 
@@ -56,7 +59,7 @@
     </div>
 
     <script>
-        const STORAGE_KEY = 'vibeTodos_vFinal_v2';
+        const STORAGE_KEY = 'vibeTodos_vFinal_v3';
         let todos = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
         let currentFilter = '전체';
 
@@ -65,9 +68,7 @@
         const saveStatus = document.getElementById('saveStatus');
         const dateDisplay = document.getElementById('dateDisplay');
 
-        // 초기화 함수
         function init() {
-            // 날짜 표시 로직 복구
             const now = new Date();
             const options = { month: 'long', day: 'numeric', weekday: 'long' };
             dateDisplay.innerText = now.toLocaleDateString('ko-KR', options);
