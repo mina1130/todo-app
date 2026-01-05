@@ -16,13 +16,18 @@
         .delete-btn { position: absolute; right: 0; top: 0; bottom: 0; width: 80px; background: #FF3B30; color: white; display: flex; align-items: center; justify-content: center; border-radius: 0 16px 16px 0; }
         .category-tab.active { background-color: #007AFF; color: white; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
+        /* 아이폰 전용 입력창 스타일 */
+        input, select { font-size: 16px !important; } /* 16px 미만이면 아이폰에서 자동 줌인됨 */
     </style>
 </head>
 <body class="ios-bg min-h-screen pb-20">
     <div class="max-w-md mx-auto p-6">
-        <header class="pt-10 mb-6">
-            <h1 class="text-4xl font-bold tracking-tight">Tasks</h1>
-            <p id="date" class="text-gray-500 font-medium mt-1"></p>
+        <header class="pt-10 mb-6 flex justify-between items-center">
+            <div>
+                <h1 class="text-4xl font-bold tracking-tight">Tasks</h1>
+                <p id="date" class="text-gray-500 font-medium mt-1"></p>
+            </div>
+            <div id="saveStatus" class="text-xs text-green-500 opacity-0 transition-opacity">저장됨</div>
         </header>
 
         <div class="flex gap-2 mb-6 overflow-x-auto pb-2 no-scrollbar">
@@ -32,24 +37,32 @@
             <button onclick="setFilter('쇼핑')" class="category-tab px-4 py-2 rounded-full bg-white shadow-sm text-sm font-semibold transition-all">쇼핑</button>
         </div>
 
-        <div class="mb-6 flex bg-white rounded-2xl shadow-sm overflow-hidden">
-            <select id="categorySelect" class="bg-gray-50 px-3 text-sm border-r outline-none">
+        <div class="mb-6 flex bg-white rounded-2xl shadow-sm overflow-hidden border border-transparent focus-within:border-blue-500">
+            <select id="categorySelect" class="bg-gray-50 px-3 text-sm border-r outline-none appearance-none">
                 <option value="개인">개인</option>
                 <option value="업무">업무</option>
                 <option value="쇼핑">쇼핑</option>
             </select>
-            <input type="text" id="todoInput" placeholder="할 일 추가..." class="w-full p-4 outline-none text-lg">
-        </div>
+            <input type="text" id="todoInput" placeholder="할 일 추가..." 
+                class="w-full p-4 outline-none text-lg" 
+                enterkeyhint="done"> </div>
 
         <div id="todoList" class="space-y-3"></div>
     </div>
 
     <script>
-        let todos = JSON.parse(localStorage.getItem('vibeTodos') || '[]');
-        let currentFilter = '전체';
+        // 초기 데이터 로드 (더 안전한 방식)
+        let todos = [];
+        try {
+            const saved = localStorage.getItem('vibeTodos');
+            todos = saved ? JSON.parse(saved) : [];
+        } catch (e) {
+            todos = [];
+        }
 
         const input = document.getElementById('todoInput');
         const list = document.getElementById('todoList');
+        const saveStatus = document.getElementById('saveStatus');
 
         function init() {
             document.getElementById('date').innerText = new Date().toLocaleDateString('ko-KR', { weekday: 'long', month: 'long', day: 'numeric' });
@@ -58,6 +71,9 @@
 
         function save() {
             localStorage.setItem('vibeTodos', JSON.stringify(todos));
+            // 저장 시각 시각화 (디버깅용)
+            saveStatus.style.opacity = '1';
+            setTimeout(() => saveStatus.style.opacity = '0', 1000);
             render();
         }
 
@@ -69,20 +85,32 @@
             render();
         }
 
+        let currentFilter = '전체';
+
         function addTodo() {
-            if (!input.value.trim()) return;
+            const text = input.value.trim();
+            if (!text) return;
+
             const newTodo = {
                 id: Date.now(),
-                text: input.value.trim(),
+                text: text,
                 category: document.getElementById('categorySelect').value,
                 completed: false
             };
+            
             todos.push(newTodo);
             input.value = '';
+            input.blur(); // 아이폰 키보드 닫기 (이때 확실히 데이터 반영됨)
             save();
         }
 
-        input.addEventListener('keypress', (e) => e.key === 'Enter' && addTodo());
+        // 아이폰에서 엔터 키 대응 강화
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault(); // 페이지 새로고침 방지
+                addTodo();
+            }
+        });
 
         function toggleTodo(id) {
             todos = todos.map(t => t.id === id ? {...t, completed: !t.completed} : t);
@@ -98,14 +126,13 @@
             list.innerHTML = '';
             const filtered = todos.filter(t => currentFilter === '전체' || t.category === currentFilter);
             
-            // 최신순 정렬
             filtered.slice().reverse().forEach(todo => {
                 const wrapper = document.createElement('div');
-                wrapper.className = 'relative overflow-hidden rounded-2xl shadow-sm bg-white animate__animated animate__fadeInIn';
+                wrapper.className = 'relative overflow-hidden rounded-2xl shadow-sm bg-white';
                 
                 wrapper.innerHTML = `
                     <div class="delete-btn">삭제</div>
-                    <div class="todo-item flex items-center p-4 bg-white relative z-10" style="transform: translateX(0)">
+                    <div class="todo-item flex items-center p-4 bg-white relative z-10">
                         <div onclick="toggleTodo(${todo.id})" class="checkbox w-7 h-7 border-2 ${todo.completed ? 'bg-blue-500 border-blue-500' : 'border-gray-200'} rounded-full mr-4 flex items-center justify-center transition-all">
                             <svg class="w-4 h-4 text-white ${todo.completed ? '' : 'hidden'}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
                         </div>
@@ -116,14 +143,17 @@
                     </div>
                 `;
 
-                // 스와이프 로직
                 const content = wrapper.querySelector('.todo-item');
                 let startX = 0;
-                content.addEventListener('touchstart', e => startX = e.touches[0].clientX);
+                content.addEventListener('touchstart', e => {
+                    startX = e.touches[0].clientX;
+                }, {passive: true});
+
                 content.addEventListener('touchmove', e => {
                     let moveX = e.touches[0].clientX - startX;
                     if (moveX < 0) content.style.transform = `translateX(${moveX}px)`;
-                });
+                }, {passive: true});
+
                 content.addEventListener('touchend', e => {
                     let endX = e.changedTouches[0].clientX;
                     if (startX - endX > 70) {
