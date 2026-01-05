@@ -26,12 +26,12 @@
 </head>
 <body class="ios-bg min-h-screen pb-20">
     <div class="max-w-md mx-auto p-6">
-        <header class="pt-10 mb-6 flex justify-between items-center">
+        <header class="pt-10 mb-6 flex justify-between items-start">
             <div>
-                <h1 class="text-4xl font-bold tracking-tight">Tasks</h1>
-                <p id="date" class="text-gray-500 font-medium mt-1"></p>
+                <h1 class="text-4xl font-bold tracking-tight text-gray-900">Tasks</h1>
+                <p id="dateDisplay" class="text-gray-500 font-medium mt-1 text-lg"></p>
             </div>
-            <div id="saveStatus" class="bg-blue-500 text-white text-[10px] px-2 py-1 rounded-full opacity-0 transition-opacity">SAVED</div>
+            <div id="saveStatus" class="bg-blue-500 text-white text-[10px] px-2 py-1 rounded-full opacity-0 transition-opacity mt-2">SAVED</div>
         </header>
 
         <div class="flex gap-2 mb-6 overflow-x-auto pb-2 no-scrollbar">
@@ -41,13 +41,13 @@
             <button onclick="setFilter('쇼핑')" class="category-tab px-4 py-2 rounded-full bg-white shadow-sm text-sm font-semibold transition-all">쇼핑</button>
         </div>
 
-        <div class="mb-6 flex bg-white rounded-2xl shadow-sm overflow-hidden focus-within:ring-2 focus-within:ring-blue-500 transition-all">
-            <select id="categorySelect" class="bg-gray-50 px-3 text-sm border-r outline-none appearance-none">
+        <div class="mb-6 flex bg-white rounded-2xl shadow-sm overflow-hidden border border-transparent focus-within:border-blue-500 transition-all">
+            <select id="categorySelect" class="bg-gray-50 px-3 text-sm border-r outline-none appearance-none text-gray-600">
                 <option value="개인">개인</option>
                 <option value="업무">업무</option>
                 <option value="쇼핑">쇼핑</option>
             </select>
-            <input type="text" id="todoInput" placeholder="할 일 추가..." 
+            <input type="text" id="todoInput" placeholder="새로운 할 일..." 
                 class="w-full p-4 outline-none text-lg" 
                 enterkeyhint="done" autocomplete="off" autocorrect="off">
         </div>
@@ -56,16 +56,21 @@
     </div>
 
     <script>
-        const STORAGE_KEY = 'vibeTodos_vFinal';
+        const STORAGE_KEY = 'vibeTodos_vFinal_v2';
         let todos = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
         let currentFilter = '전체';
 
         const input = document.getElementById('todoInput');
         const list = document.getElementById('todoList');
         const saveStatus = document.getElementById('saveStatus');
+        const dateDisplay = document.getElementById('dateDisplay');
 
+        // 초기화 함수
         function init() {
-            document.getElementById('date').innerText = new Date().toLocaleDateString('ko-KR', { weekday: 'long', month: 'long', day: 'numeric' });
+            // 날짜 표시 로직 복구
+            const now = new Date();
+            const options = { month: 'long', day: 'numeric', weekday: 'long' };
+            dateDisplay.innerText = now.toLocaleDateString('ko-KR', options);
             render();
         }
 
@@ -87,7 +92,12 @@
         function addTodo() {
             const val = input.value.trim();
             if (!val) return;
-            todos.push({ id: Date.now(), text: val, category: document.getElementById('categorySelect').value, completed: false });
+            todos.push({ 
+                id: Date.now(), 
+                text: val, 
+                category: document.getElementById('categorySelect').value, 
+                completed: false 
+            });
             input.value = '';
             input.blur();
             save();
@@ -111,7 +121,7 @@
             
             filtered.slice().reverse().forEach(todo => {
                 const wrapper = document.createElement('div');
-                wrapper.className = 'relative overflow-hidden rounded-2xl shadow-sm bg-white h-[72px] animate__animated animate__fadeIn';
+                wrapper.className = 'relative overflow-hidden rounded-2xl shadow-sm bg-white h-[72px]';
                 
                 wrapper.innerHTML = `
                     <div class="delete-action-btn" onclick="deleteTodo(${todo.id})">삭제</div>
@@ -119,4 +129,45 @@
                         <div onclick="toggleTodo(${todo.id})" class="checkbox w-7 h-7 border-2 ${todo.completed ? 'bg-blue-500 border-blue-500' : 'border-gray-200'} rounded-full mr-4 flex items-center justify-center transition-all">
                             <svg class="w-4 h-4 text-white ${todo.completed ? '' : 'hidden'}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
                         </div>
-                        <div class="flex flex
+                        <div class="flex flex-col">
+                            <span class="text-blue-500 font-bold" style="font-size: 0.65rem;">${todo.category}</span>
+                            <span class="text-lg ${todo.completed ? 'line-through text-gray-400' : 'text-gray-800'}">${todo.text}</span>
+                        </div>
+                    </div>
+                `;
+
+                const content = wrapper.querySelector('.todo-item');
+                let startX = 0;
+                let isSwiped = false;
+
+                content.addEventListener('touchstart', e => {
+                    startX = e.touches[0].clientX;
+                    content.style.transition = 'none';
+                }, {passive: true});
+
+                content.addEventListener('touchmove', e => {
+                    let moveX = e.touches[0].clientX - startX;
+                    if (moveX < 10 && moveX > -100) {
+                        content.style.transform = `translateX(${moveX}px)`;
+                    }
+                }, {passive: true});
+
+                content.addEventListener('touchend', e => {
+                    content.style.transition = 'transform 0.3s cubic-bezier(0.25, 1, 0.5, 1)';
+                    let endX = e.changedTouches[0].clientX;
+                    if (startX - endX > 50) {
+                        content.style.transform = `translateX(-80px)`;
+                        isSwiped = true;
+                    } else {
+                        content.style.transform = `translateX(0)`;
+                        isSwiped = false;
+                    }
+                });
+
+                list.appendChild(wrapper);
+            });
+        }
+        init();
+    </script>
+</body>
+</html>
