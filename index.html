@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>Todo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     * {
       box-sizing: border-box;
@@ -10,77 +11,125 @@
     }
 
     body {
-      background: #f6f6f6;
+      margin: 0;
+      background: #f2f2f7;
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100vh;
-      margin: 0;
     }
 
     .app {
-      background: white;
-      width: 320px;
+      width: 360px;
+      background: #fff;
+      border-radius: 24px;
       padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.12);
     }
 
     h1 {
       margin: 0 0 16px;
-      font-size: 20px;
       text-align: center;
+      font-size: 22px;
+      font-weight: 600;
     }
 
     .input-box {
       display: flex;
       gap: 8px;
+      margin-bottom: 16px;
     }
 
     input {
       flex: 1;
-      padding: 8px;
+      padding: 12px;
+      border-radius: 12px;
       border: 1px solid #ddd;
-      border-radius: 6px;
+      font-size: 14px;
     }
 
-    button {
-      padding: 8px 12px;
-      border: none;
-      background: #222;
+    button.add {
+      background: #007aff;
       color: white;
-      border-radius: 6px;
+      border: none;
+      border-radius: 12px;
+      padding: 0 16px;
+      font-size: 14px;
       cursor: pointer;
     }
 
     ul {
       list-style: none;
       padding: 0;
-      margin: 16px 0 0;
+      margin: 0;
     }
 
     li {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      padding: 8px 0;
+      gap: 12px;
+      padding: 12px 4px;
       border-bottom: 1px solid #eee;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(6px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .check {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 2px solid #ccc;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .check::after {
+      content: "✓";
+      font-size: 14px;
+      color: white;
+      transform: scale(0);
+      transition: transform 0.2s ease;
+    }
+
+    li.done .check {
+      background: #34c759;
+      border-color: #34c759;
+    }
+
+    li.done .check::after {
+      transform: scale(1);
+    }
+
+    span {
+      flex: 1;
+      font-size: 15px;
+      transition: color 0.3s ease;
     }
 
     li.done span {
-      text-decoration: line-through;
       color: #aaa;
-    }
-
-    li span {
-      cursor: pointer;
-      flex: 1;
+      text-decoration: line-through;
     }
 
     .delete {
+      border: none;
       background: none;
-      color: #999;
+      color: #ff3b30;
       font-size: 14px;
+      cursor: pointer;
     }
   </style>
 </head>
@@ -90,7 +139,7 @@
 
     <div class="input-box">
       <input id="todoInput" placeholder="할 일을 입력하세요" />
-      <button onclick="addTodo()">추가</button>
+      <button class="add" onclick="addTodo()">추가</button>
     </div>
 
     <ul id="todoList"></ul>
@@ -106,15 +155,19 @@
 
       const li = document.createElement("li");
 
+      const check = document.createElement("div");
+      check.className = "check";
+      check.onclick = () => li.classList.toggle("done");
+
       const span = document.createElement("span");
       span.textContent = text;
-      span.onclick = () => li.classList.toggle("done");
 
       const del = document.createElement("button");
-      del.textContent = "삭제";
       del.className = "delete";
+      del.textContent = "삭제";
       del.onclick = () => li.remove();
 
+      li.appendChild(check);
       li.appendChild(span);
       li.appendChild(del);
       list.appendChild(li);
