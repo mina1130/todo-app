@@ -1,183 +1,181 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <title>Todo</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <style>
-    * {
-      box-sizing: border-box;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    }
-
-    body {
-      margin: 0;
-      background: #f2f2f7;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-    }
-
-    .app {
-      width: 360px;
-      background: #fff;
-      border-radius: 24px;
-      padding: 20px;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.12);
-    }
-
-    h1 {
-      margin: 0 0 16px;
-      text-align: center;
-      font-size: 22px;
-      font-weight: 600;
-    }
-
-    .input-box {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 16px;
-    }
-
-    input {
-      flex: 1;
-      padding: 12px;
-      border-radius: 12px;
-      border: 1px solid #ddd;
-      font-size: 14px;
-    }
-
-    button.add {
-      background: #007aff;
-      color: white;
-      border: none;
-      border-radius: 12px;
-      padding: 0 16px;
-      font-size: 14px;
-      cursor: pointer;
-    }
-
-    ul {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-    }
-
-    li {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 12px 4px;
-      border-bottom: 1px solid #eee;
-      animation: fadeIn 0.3s ease;
-    }
-
-    @keyframes fadeIn {
-      from {
-        opacity: 0;
-        transform: translateY(6px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    .check {
-      width: 22px;
-      height: 22px;
-      border-radius: 50%;
-      border: 2px solid #ccc;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-
-    .check::after {
-      content: "✓";
-      font-size: 14px;
-      color: white;
-      transform: scale(0);
-      transition: transform 0.2s ease;
-    }
-
-    li.done .check {
-      background: #34c759;
-      border-color: #34c759;
-    }
-
-    li.done .check::after {
-      transform: scale(1);
-    }
-
-    span {
-      flex: 1;
-      font-size: 15px;
-      transition: color 0.3s ease;
-    }
-
-    li.done span {
-      color: #aaa;
-      text-decoration: line-through;
-    }
-
-    .delete {
-      border: none;
-      background: none;
-      color: #ff3b30;
-      font-size: 14px;
-      cursor: pointer;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Vibe Todo</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap');
+        body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; outline: none; }
+        .ios-bg { background-color: #F2F2F7; }
+        .todo-item { transition: transform 0.2s ease; touch-action: pan-x; }
+        .delete-btn { position: absolute; right: 0; top: 0; bottom: 0; width: 80px; background: #FF3B30; color: white; display: flex; align-items: center; justify-content: center; border-radius: 0 16px 16px 0; z-index: 0; }
+        .check-pop { animation: pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
+        .category-tab.active { background-color: #007AFF; color: white; }
+    </style>
 </head>
-<body>
-  <div class="app">
-    <h1>할 일</h1>
+<body class="ios-bg min-h-screen pb-20">
+    <div class="max-w-md mx-auto p-6">
+        <header class="flex justify-between items-end mb-6 pt-10">
+            <div>
+                <h1 class="text-4xl font-bold tracking-tight">Tasks</h1>
+                <p id="date" class="text-gray-500 font-medium mt-1"></p>
+            </div>
+        </header>
 
-    <div class="input-box">
-      <input id="todoInput" placeholder="할 일을 입력하세요" />
-      <button class="add" onclick="addTodo()">추가</button>
+        <div class="flex gap-2 mb-6 overflow-x-auto pb-2 no-scrollbar">
+            <button onclick="filterCategory('전체')" class="category-tab active px-4 py-2 rounded-full bg-white shadow-sm text-sm font-semibold transition-all">전체</button>
+            <button onclick="filterCategory('개인')" class="category-tab px-4 py-2 rounded-full bg-white shadow-sm text-sm font-semibold transition-all">개인</button>
+            <button onclick="filterCategory('업무')" class="category-tab px-4 py-2 rounded-full bg-white shadow-sm text-sm font-semibold transition-all">업무</button>
+            <button onclick="filterCategory('쇼핑')" class="category-tab px-4 py-2 rounded-full bg-white shadow-sm text-sm font-semibold transition-all">쇼핑</button>
+        </div>
+
+        <div class="mb-6 space-y-2">
+            <div class="flex bg-white rounded-2xl shadow-sm overflow-hidden">
+                <select id="categorySelect" class="bg-gray-50 px-3 text-sm border-r outline-none text-gray-600">
+                    <option value="개인">개인</option>
+                    <option value="업무">업무</option>
+                    <option value="쇼핑">쇼핑</option>
+                </select>
+                <input type="text" id="todoInput" placeholder="새로운 할 일 추가..." 
+                    class="w-full p-4 outline-none text-lg">
+            </div>
+        </div>
+
+        <div id="todoList" class="space-y-3">
+            </div>
     </div>
 
-    <ul id="todoList"></ul>
-  </div>
+    <script>
+        let currentFilter = '전체';
+        const input = document.getElementById('todoInput');
+        const list = document.getElementById('todoList');
+        const categorySelect = document.getElementById('categorySelect');
 
-  <script>
-    const input = document.getElementById("todoInput");
-    const list = document.getElementById("todoList");
+        // 초기화
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('date').innerText = new Date().toLocaleDateString('ko-KR', { weekday: 'long', month: 'long', day: 'numeric' });
+            loadTodos();
+        });
 
-    function addTodo() {
-      const text = input.value.trim();
-      if (!text) return;
+        // 입력 이벤트
+        input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && input.value.trim()) {
+                createTodo(input.value.trim(), categorySelect.value, false);
+                saveTodos();
+                input.value = '';
+            }
+        });
 
-      const li = document.createElement("li");
+        // 카테고리 필터링
+        function filterCategory(cat) {
+            currentFilter = cat;
+            document.querySelectorAll('.category-tab').forEach(tab => {
+                tab.classList.toggle('active', tab.innerText === cat);
+            });
+            loadTodos();
+        }
 
-      const check = document.createElement("div");
-      check.className = "check";
-      check.onclick = () => li.classList.toggle("done");
+        function createTodo(text, category, isCompleted) {
+            // 필터링 조건 확인 (불러오기 시 사용)
+            if (currentFilter !== '전체' && category !== currentFilter) return;
 
-      const span = document.createElement("span");
-      span.textContent = text;
+            const id = Date.now();
+            const wrapper = document.createElement('div');
+            wrapper.className = 'relative overflow-hidden rounded-2xl shadow-sm bg-white animate__animated animate__fadeInUp';
+            wrapper.dataset.category = category;
+            
+            wrapper.innerHTML = `
+                <div class="delete-btn">삭제</div>
+                <div class="todo-item flex items-center p-4 bg-white relative z-10" id="item-${id}">
+                    <div class="checkbox w-7 h-7 border-2 ${isCompleted ? 'bg-blue-500 border-blue-500' : 'border-gray-200'} rounded-full mr-4 flex items-center justify-center transition-all cursor-pointer">
+                        <svg class="w-4 h-4 text-white ${isCompleted ? '' : 'hidden'}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="text-sm text-blue-500 font-bold mb-0.5" style="font-size: 0.65rem;">${category}</span>
+                        <span class="text-lg ${isCompleted ? 'line-through text-gray-400' : 'text-gray-800'}">${text}</span>
+                    </div>
+                </div>
+            `;
 
-      const del = document.createElement("button");
-      del.className = "delete";
-      del.textContent = "삭제";
-      del.onclick = () => li.remove();
+            const content = wrapper.querySelector('.todo-item');
+            const checkbox = wrapper.querySelector('.checkbox');
+            const textSpan = wrapper.querySelectorAll('span')[1];
+            let startX = 0, currentX = 0;
 
-      li.appendChild(check);
-      li.appendChild(span);
-      li.appendChild(del);
-      list.appendChild(li);
+            // 완료 기능
+            checkbox.onclick = () => {
+                const done = checkbox.classList.toggle('bg-blue-500');
+                checkbox.classList.toggle('border-blue-500');
+                checkbox.classList.add('check-pop');
+                checkbox.querySelector('svg').classList.toggle('hidden');
+                textSpan.classList.toggle('line-through');
+                textSpan.classList.toggle('text-gray-400');
+                setTimeout(() => {
+                    checkbox.classList.remove('check-pop');
+                    saveTodos();
+                }, 300);
+            };
 
-      input.value = "";
-    }
+            // 스와이프 삭제
+            content.addEventListener('touchstart', e => startX = e.touches[0].clientX);
+            content.addEventListener('touchmove', e => {
+                currentX = e.touches[0].clientX - startX;
+                if (currentX < 0) content.style.transform = `translateX(${currentX}px)`;
+            });
+            content.addEventListener('touchend', () => {
+                if (currentX < -70) {
+                    wrapper.classList.replace('animate__fadeInUp', 'animate__fadeOutLeft');
+                    setTimeout(() => { wrapper.remove(); saveTodos(); }, 400);
+                } else {
+                    content.style.transform = `translateX(0)`;
+                }
+                currentX = 0;
+            });
 
-    input.addEventListener("keydown", e => {
-      if (e.key === "Enter") addTodo();
-    });
-  </script>
+            list.prepend(wrapper);
+        }
+
+        function saveTodos() {
+            // 필터와 관계없이 모든 데이터를 저장하기 위해 DOM 대신 배열 관리 권장되나, 
+            // 현재 구조 유지를 위해 로컬스토리지에 전체 상태를 객체화하여 저장하는 로직
+            const allItems = [];
+            // 로컬스토리지에서 기존 데이터를 가져와서 현재 카테고리 외의 데이터도 보존
+            const saved = JSON.parse(localStorage.getItem('vibeTodos') || '[]');
+            
+            // 현재 화면에 떠있는 아이템 추출
+            const currentUIItems = Array.from(document.querySelectorAll('.todo-item')).map(item => ({
+                text: item.querySelectorAll('span')[1].innerText,
+                category: item.parentElement.dataset.category,
+                completed: item.querySelectorAll('span')[1].classList.contains('line-through')
+            }));
+
+            // 필터링 중일 때는 저장 로직이 복잡해지므로, 
+            // 여기서는 '전체' 데이터를 항상 들고 있는 방식으로 간단히 구현하거나 
+            // 별도의 state 배열을 사용하는 것이 좋으나 바이브 코딩을 위해 직관적으로 처리
+            let updatedList;
+            if (currentFilter === '전체') {
+                updatedList = currentUIItems;
+            } else {
+                const otherCategoryItems = saved.filter(t => t.category !== currentFilter);
+                updatedList = [...currentUIItems, ...otherCategoryItems];
+            }
+            localStorage.setItem('vibeTodos', JSON.stringify(updatedList));
+        }
+
+        function loadTodos() {
+            list.innerHTML = '';
+            const saved = JSON.parse(localStorage.getItem('vibeTodos') || '[]');
+            // 저장된 순서 유지를 위해 reverse
+            saved.forEach(todo => {
+                createTodo(todo.text, todo.category, todo.completed);
+            });
+        }
+    </script>
 </body>
 </html>
